@@ -121,6 +121,8 @@ async function queryAPI(query, endpoints, conText, timeout = 45000) {
 }
 
 const audioEndpoints = [
+  'ytmp3v2',
+  'ytaudio',
   'yta',
   'dlmp3',
   'ytmp3',
@@ -129,6 +131,8 @@ const audioEndpoints = [
 ];
 
 const videoEndpoints = [
+  'ytmp4v2',
+  'ytvideo',
   'ytv',
   'dlmp4',
   'ytmp4',
@@ -195,7 +199,7 @@ gmd(
         title: `${botName} 𝐒𝐎𝐍𝐆 𝐃𝐎𝐖𝐍𝐋𝐎𝐀𝐃𝐄𝐑`,
         text: `⿻ *Title:* ${firstVideo.title}\n⿻ *Duration:* ${firstVideo.timestamp}\n\n*Select download format:*`,
         footer: botFooter,
-        image: firstVideo.thumbnail || botPic,
+        image: { url: firstVideo.thumbnail || botPic },
         buttons: [
           { id: `audio_${buttonId}`, text: "Audio 🎶" },
           { id: `voice_${buttonId}`, text: "Voice Message 🔉" },
@@ -343,7 +347,7 @@ gmd(
         title: `${botName} 𝐕𝐈𝐃𝐄𝐎 𝐃𝐎𝐖𝐍𝐋𝐎𝐀𝐃𝐄𝐑`,
         text: `⿻ *Title:* ${firstVideo.title}\n⿻ *Duration:* ${firstVideo.timestamp}\n\n*Select download format:*`,
         footer: botFooter,
-        image: firstVideo.thumbnail || botPic,
+        image: { url: firstVideo.thumbnail || botPic },
         buttons: [
           { id: `vid_${buttonId}`, text: "Video 🎥" },
           { id: `doc_${buttonId}`, text: "Video Document 📄" },
