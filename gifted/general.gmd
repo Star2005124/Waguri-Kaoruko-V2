@@ -171,7 +171,7 @@ gmd(
 
       const uptime = formatUptime(process.uptime());
       const totalCommands = commands.filter(
-        (command) => command.pattern,
+        (command) => command.pattern && !command.dontAddCommandList,
       ).length;
 
       let menus = `
@@ -274,7 +274,7 @@ gmd(
 
       const uptime = formatUptime(process.uptime());
       const totalCommands = commands.filter(
-        (command) => command.pattern,
+        (command) => command.pattern && !command.dontAddCommandList,
       ).length;
 
       let list = `
@@ -372,8 +372,8 @@ gmd(
       }).format(now);
 
       const uptime = formatUptime(process.uptime());
-      const regularCmds = commands.filter((c) => c.pattern && !c.on);
-      const bodyCmds = commands.filter((c) => c.pattern && c.on === "body");
+      const regularCmds = commands.filter((c) => c.pattern && !c.on && !c.dontAddCommandList);
+      const bodyCmds = commands.filter((c) => c.pattern && c.on === "body" && !c.dontAddCommandList);
       const totalCommands = regularCmds.length + bodyCmds.length;
 
       const categorized = commands.reduce((menu, gmd) => {
@@ -619,6 +619,7 @@ gmd(
       title: "",
       text: messageText,
       footer: `> *${botFooter}*`,
+      image: { url: botPic },
       buttons: [
         {
           name: "cta_copy",

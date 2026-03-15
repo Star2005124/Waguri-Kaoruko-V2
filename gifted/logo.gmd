@@ -249,14 +249,14 @@ gmd(
     description: "Show all available logo commands",
   },
   async (from, Gifted, conText) => {
-    const { mek, reply, react, botCaption, botName } = conText;
+    const { mek, reply, react, botCaption, botName, botPrefix } = conText;
 
     const logoList = logoEndpoints
       .map((l, i) => `${i + 1}. *.${l.pattern}* - ${l.description}`)
       .join("\n");
 
     await reply(
-      `🎨 *${botName} LOGO MAKER*\n\n${logoList}\n\n📝 *Usage:* .commandname <your text>\n📌 *Example:* .glossysilver Gifted Tech\n\n> ${botCaption}`,
+      `🎨 *${botName} LOGO MAKER*\n\n${logoList}\n\n📝 *Usage:* ${botPrefix}commandname <your text>\n📌 *Example:* ${botPrefix}glossysilver Gifted Tech\n\n> ${botCaption}`,
     );
     await react("✅");
   },

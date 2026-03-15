@@ -478,7 +478,7 @@ gmd({
     category: "game",
     description: "Submit a word in Word Chain Game",
 }, async (from, Gifted, conText) => {
-    const { sender, q } = conText;
+    const { sender, q, botPrefix } = conText;
     
     const game = await getActiveWcgGame(from);
     if (!game) {
@@ -487,7 +487,7 @@ gmd({
     
     if (!q || q.trim() === '') {
         return await Gifted.sendMessage(from, {
-            text: "❌ Provide a word!\n\nUsage: .w <word>",
+            text: `❌ Provide a word!\n\nUsage: ${botPrefix}w <word>`,
 
         });
     }

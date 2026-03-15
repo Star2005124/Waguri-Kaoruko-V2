@@ -25,7 +25,7 @@ gmd(
     await react("⏳");
 
     try {
-      const res = await axios.get(`${GiftedTechApi}/api/tools/bible`, {
+      const res = await axios.get(`${GiftedTechApi}/api/search/bible`, {
         params: { apikey: GiftedApiKey, verse: verse },
       });
 

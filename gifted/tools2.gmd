@@ -180,6 +180,7 @@ gmd(
       quotedMsg,
       botFooter,
       botName,
+      botPrefix,
       GiftedTechApi,
       GiftedApiKey,
     } = conText;
@@ -193,7 +194,7 @@ gmd(
     if (!content) {
       await react("❌");
       return reply(
-        "Please provide text or a link\n\nUsage: .createqr Hello World\nOr quote a message",
+        `Please provide text or a link\n\nUsage: ${botPrefix}createqr Hello World\nOr quote a message`,
       );
     }
 
@@ -240,6 +241,7 @@ gmd(
       quotedMsg,
       botFooter,
       botName,
+      botPrefix,
       GiftedTechApi,
       GiftedApiKey,
       uploadToImgBB,
@@ -269,7 +271,7 @@ gmd(
     if (!imageUrl) {
       await react("❌");
       return reply(
-        "Please provide a QR code image URL or quote an image\n\nUsage: .readqr <url>\nOr quote an image",
+        `Please provide a QR code image URL or quote an image\n\nUsage: ${botPrefix}readqr <url>\nOr quote an image`,
       );
     }
 
@@ -327,6 +329,7 @@ gmd(
       react,
       q,
       botName,
+      botPrefix,
       GiftedTechApi,
       GiftedApiKey,
       packName,
@@ -336,7 +339,7 @@ gmd(
     const text = q?.trim();
     if (!text) {
       await react("❌");
-      return reply("Please provide text\n\nUsage: .ttp Hello World");
+      return reply(`Please provide text\n\nUsage: ${botPrefix}ttp Hello World`);
     }
 
     await react("⏳");
@@ -390,6 +393,7 @@ gmd(
       command,
       botFooter,
       botName,
+      botPrefix,
       GiftedTechApi,
       GiftedApiKey,
     } = conText;
@@ -398,7 +402,7 @@ gmd(
     if (!text) {
       await react("❌");
       return reply(
-        "Please provide text\n\nUsage: .fancy Hello\nOr .fancy4 Hello (for specific style)",
+        `Please provide text\n\nUsage: ${botPrefix}fancy Hello\nOr ${botPrefix}fancy4 Hello (for specific style)`,
       );
     }
 
@@ -445,7 +449,7 @@ gmd(
         results.forEach((r, i) => {
           txt += `*${i + 1}. ${r.name}*\n${r.result}\n\n`;
         });
-        txt += `\n💡 Use .fancy<number> to copy specific style\nExample: .fancy5 ${text}\n\n> *${botFooter}*`;
+        txt += `\n💡 Use ${botPrefix}fancy<number> to copy specific style\nExample: ${botPrefix}fancy5 ${text}\n\n> *${botFooter}*`;
 
         await reply(txt);
       }
@@ -468,13 +472,13 @@ gmd(
     description: "Get the meaning/definition of a word",
   },
   async (from, Gifted, conText) => {
-    const { reply, react, q, botFooter, botName, GiftedTechApi, GiftedApiKey } =
+    const { reply, react, q, botFooter, botName, botPrefix, GiftedTechApi, GiftedApiKey } =
       conText;
 
     const term = q?.trim();
     if (!term) {
       await react("❌");
-      return reply("Please provide a word to define\n\nUsage: .define hello");
+      return reply(`Please provide a word to define\n\nUsage: ${botPrefix}define hello`);
     }
 
     await react("⏳");
@@ -531,6 +535,7 @@ gmd(
       q,
       botFooter,
       botName,
+      botPrefix,
       GiftedTechApi,
       GiftedApiKey,
     } = conText;
@@ -539,7 +544,7 @@ gmd(
     if (!url) {
       await react("❌");
       return reply(
-        "Please provide a URL\n\nUsage: .web2zip https://example.com",
+        `Please provide a URL\n\nUsage: ${botPrefix}web2zip https://example.com`,
       );
     }
 
@@ -594,6 +599,7 @@ gmd(
       q,
       botFooter,
       botName,
+      botPrefix,
       GiftedTechApi,
       GiftedApiKey,
     } = conText;
@@ -602,7 +608,7 @@ gmd(
     if (!input) {
       await react("❌");
       return reply(
-        "Please provide two emojis\n\nUsage: .emojimix 😂:🙄\nOr: .emojimix 😂🙄",
+        `Please provide two emojis\n\nUsage: ${botPrefix}emojimix 😂:🙄\nOr: ${botPrefix}emojimix 😂🙄`,
       );
     }
 
@@ -623,7 +629,7 @@ gmd(
 
     if (!emoji1 || !emoji2) {
       await react("❌");
-      return reply("Please provide two valid emojis\n\nUsage: .emojimix 😂:🙄");
+      return reply(`Please provide two valid emojis\n\nUsage: ${botPrefix}emojimix 😂:🙄`);
     }
 
     await react("⏳");
@@ -672,17 +678,18 @@ gmd(
       quotedMsg,
       getMediaBuffer,
       getFileContentType,
+      botPrefix,
     } = conText;
 
     if (!quotedMsg) {
       await react("❌");
-      return reply("Please quote/reply to a document or media file\n\nUsage: .rename <new filename>");
+      return reply(`Please quote/reply to a document or media file\n\nUsage: ${botPrefix}rename <new filename>`);
     }
 
     const newName = q?.trim();
     if (!newName) {
       await react("❌");
-      return reply("Please provide a new filename\n\nUsage: .rename <new filename>\nExample: .rename my_video.mp4");
+      return reply(`Please provide a new filename\n\nUsage: ${botPrefix}rename <new filename>\nExample: ${botPrefix}rename my_video.mp4`);
     }
 
     await react("⏳");

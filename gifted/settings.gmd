@@ -564,6 +564,43 @@ gmd(
 
 gmd(
   {
+    pattern: "setantiedit",
+    aliases: ["antiedit"],
+    react: "⚙️",
+    category: "owner",
+    description: "Set anti-edit (on/off/indm/inchat)",
+  },
+  async (from, Gifted, conText) => {
+    const { q, reply, react, isSuperUser } = conText;
+    if (!isSuperUser) return reply("❌ Owner Only Command!");
+    const valid = ["on", "off", "indm", "inchat"];
+    const value = (q || "").trim().toLowerCase();
+    if (!value || !valid.includes(value)) {
+      return reply(
+        `❌ Please specify: *on*, *off*, *indm* (DM only), or *inchat* (in chat only)\n\n` +
+        `*Current valid values:*\n` +
+        `• *indm* - Alert in owner DM only (default)\n` +
+        `• *inchat* - Alert in same chat only\n` +
+        `• *on* - Alert in both DM and chat\n` +
+        `• *off* - Disable anti-edit`,
+      );
+    }
+    try {
+      const current = await getSetting("ANTI_EDIT");
+      if (current === value) {
+        return reply(`⚠️ Anti-edit is already set to: *${value}*`);
+      }
+      await setSetting("ANTI_EDIT", value);
+      await react("✅");
+      await reply(`✅ Anti-edit set to: *${value}*`);
+    } catch (error) {
+      await reply(`❌ Error: ${error.message}`);
+    }
+  },
+);
+
+gmd(
+  {
     pattern: "setwelcome",
     aliases: ["welcome", "welcomemsg"],
     react: "⚙️",
@@ -666,6 +703,11 @@ gmd(
         );
       }
 
+      const currentWelcome = await getGroupSetting(from, "WELCOME_MESSAGE_TEXT");
+      if (currentWelcome && currentWelcome.trim() === q.trim()) {
+        return reply(`⚠️ Welcome message is already set to that text!`);
+      }
+
       await setGroupSetting(from, "WELCOME_MESSAGE_TEXT", q.trim());
       await react("✅");
       await reply(`✅ Welcome message set:\n\n${q.trim()}`);
@@ -707,6 +749,11 @@ gmd(
         return reply(
           "✅ Custom goodbye message cleared. Default message will be used.",
         );
+      }
+
+      const currentGoodbye = await getGroupSetting(from, "GOODBYE_MESSAGE_TEXT");
+      if (currentGoodbye && currentGoodbye.trim() === q.trim()) {
+        return reply(`⚠️ Goodbye message is already set to that text!`);
       }
 
       await setGroupSetting(from, "GOODBYE_MESSAGE_TEXT", q.trim());
@@ -842,6 +889,10 @@ gmd(
     }
 
     try {
+      const currentWarnCount = (await getGroupSetting(from, "ANTILINK_WARN_COUNT")) || "5";
+      if (currentWarnCount === count.toString()) {
+        return reply(`⚠️ Antilink warn count is already set to: *${count}*`);
+      }
       await setGroupSetting(from, "ANTILINK_WARN_COUNT", count.toString());
       await react("✅");
       await reply(
@@ -942,6 +993,10 @@ gmd(
     }
 
     try {
+      const currentBadCount = (await getGroupSetting(from, "ANTIBAD_WARN_COUNT")) || "5";
+      if (currentBadCount === count.toString()) {
+        return reply(`⚠️ Anti-badwords warn count is already set to: *${count}*`);
+      }
       await setGroupSetting(from, "ANTIBAD_WARN_COUNT", count.toString());
       await react("✅");
       await reply(

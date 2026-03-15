@@ -1,6 +1,10 @@
 const { gmd, gmdSticker } = require("../gift"),
-  acrcloud = require("acrcloud"),
   fs = require("fs").promises,
+  fss = require("fs"),
+  os = require("os"),
+  path = require("path"),
+  ffmpeg = require("fluent-ffmpeg"),
+  ffmpegPath = require("ffmpeg-static"),
   axios = require("axios"),
   stream = require("stream"),
   { promisify } = require("util"),
@@ -121,82 +125,106 @@ gmd(
   async (from, Gifted, conText) => {
     const {
       mek,
+      q,
       reply,
       react,
       botPic,
+      botPrefix,
       quoted,
       quotedMsg,
       sender,
       botName,
       botFooter,
       newsletterJid,
+      GiftedTechApi,
+      GiftedApiKey,
+      getMediaBuffer,
+      uploadToCatbox,
     } = conText;
 
-    if (!quotedMsg) {
+    const isUrl = (s) => /^https?:\/\//i.test(s?.trim());
+
+    if (!q?.trim() && !quotedMsg) {
       await react("❌");
       return reply(
-        "Please reply to an audio or video message containing music",
+        `Please reply to an audio/video message or provide a URL\n\nUsage: ${botPrefix}shazam <audio/video url>`,
       );
     }
 
     const quotedAudio = quoted?.audioMessage || quoted?.message?.audioMessage;
     const quotedVideo = quoted?.videoMessage || quoted?.message?.videoMessage;
 
-    if (!quotedAudio && !quotedVideo) {
+    if (!isUrl(q) && !quotedAudio && !quotedVideo) {
       await react("❌");
       return reply("The quoted message doesn't contain any audio or video");
     }
 
-    let tempFilePath;
     try {
-      const acr = new acrcloud({
-        host: "identify-us-west-2.acrcloud.com",
-        access_key: "4ee38e62e85515a47158aeb3d26fb741",
-        access_secret: "KZd3cUQoOYSmZQn1n5ACW5XSbqGlKLhg6G8S8EvJ",
-      });
+      let fileUrl;
 
-      tempFilePath = await Gifted.downloadAndSaveMediaMessage(
-        quotedAudio || quotedVideo,
-        "temp_media",
-      );
+      if (isUrl(q)) {
+        fileUrl = q.trim();
+      } else {
+        const mediaMsg = quotedAudio || quotedVideo;
+        const isAudio = !!quotedAudio;
+        const durationSecs = mediaMsg?.seconds || mediaMsg?.duration || 0;
+        let buffer = await getMediaBuffer(mediaMsg, isAudio ? "audio" : "video");
+        const ext = isAudio ? "mp3" : "mp4";
 
-      let buffer = await fs.readFile(tempFilePath);
+        if (durationSecs > 20) {
+          const tmpIn  = path.join(os.tmpdir(), `shazam_in_${Date.now()}.${ext}`);
+          const tmpOut = path.join(os.tmpdir(), `shazam_out_${Date.now()}.${ext}`);
+          fss.writeFileSync(tmpIn, buffer);
+          await new Promise((resolve, reject) => {
+            ffmpeg.setFfmpegPath(ffmpegPath);
+            ffmpeg(tmpIn)
+              .outputOptions(["-t", "20", "-c", "copy"])
+              .on("end", resolve)
+              .on("error", reject)
+              .save(tmpOut);
+          });
+          buffer = fss.readFileSync(tmpOut);
+          fss.unlinkSync(tmpIn);
+          fss.unlinkSync(tmpOut);
+        }
 
-      const MAX_SIZE = 1 * 1024 * 1024; // 1MB
-      if (buffer.length > MAX_SIZE) {
-        buffer = buffer.slice(0, MAX_SIZE);
+        ({ url: fileUrl } = await uploadToCatbox(buffer, `audio.${ext}`));
       }
 
-      const { status, metadata } = await acr.identify(buffer);
+      const apiUrl = `${GiftedTechApi}/api/search/shazam?apikey=${GiftedApiKey}&url=${encodeURIComponent(fileUrl)}`;
+      const res = await axios.get(apiUrl, { timeout: 60000 });
 
-      if (status.code !== 0) {
+      if (!res.data?.success || !res.data?.result) {
         await react("❌");
-        return reply(`Music identification failed: ${status.msg}`);
+        return reply("❌ Could not identify the music. Please try a clearer audio clip.");
       }
 
-      if (!metadata?.music?.[0]) {
-        await react("❌");
-        return reply("No music information found in the audio");
-      }
-
-      const { title, artists, album, genres, label, release_date } =
-        metadata.music[0];
+      const r = res.data.result;
+      const title     = r.title     || r.track?.title      || "Unknown";
+      const artist    = r.artist    || r.track?.subtitle   || r.artists || "";
+      const album     = r.album     || r.track?.sections?.find(s => s.type === "SONG")?.metadata?.find(m => m.title === "Album")?.text || "";
+      const genres    = r.genres    || r.track?.genres?.primary || "";
+      const label     = r.label     || "";
+      const releaseDate = r.releasedate || r.release_date  || "";
+      const coverart  = r.coverart  || r.track?.images?.coverarthq || r.track?.images?.coverart || botPic;
+      const spotifyUrl  = r.spotify || r.spotify_url  || r.track?.hub?.options?.find(o => o.caption === "OPEN IN SPOTIFY")?.actions?.[0]?.uri || "";
+      const youtubeUrl  = r.youtube || r.youtube_url  || "";
 
       let txt = `*${botName} 𝐒𝐇𝐀𝐙𝐀𝐌*\n\n`;
-      txt += `*Title:* ${title || "Unknown"}\n`;
-      if (artists?.length)
-        txt += `*Artists:* ${artists.map((v) => v.name).join(", ")}\n`;
-      if (album?.name) txt += `*Album:* ${album.name}\n`;
-      if (genres?.length)
-        txt += `*Genres:* ${genres.map((v) => v.name).join(", ")}\n`;
-      if (label) txt += `*Label:* ${label}\n`;
-      if (release_date) txt += `*Release Date:* ${release_date}\n`;
+      txt += `🎵 *Title:* ${title}\n`;
+      if (artist)      txt += `🎤 *Artist:* ${artist}\n`;
+      if (album)       txt += `💿 *Album:* ${album}\n`;
+      if (genres)      txt += `🎼 *Genre:* ${genres}\n`;
+      if (label)       txt += `🏷️ *Label:* ${label}\n`;
+      if (releaseDate) txt += `📅 *Released:* ${releaseDate}\n`;
+      if (spotifyUrl)  txt += `\n🟢 *Spotify:* ${spotifyUrl}\n`;
+      if (youtubeUrl)  txt += `🔴 *YouTube:* ${youtubeUrl}\n`;
       txt += `\n> *${botFooter}*`;
 
       await Gifted.sendMessage(
         from,
         {
-          image: { url: botPic },
+          image: { url: coverart },
           caption: txt,
           contextInfo: {
             mentionedJid: [sender],
@@ -215,27 +243,10 @@ gmd(
     } catch (e) {
       console.error("Error in shazam command:", e);
       await react("❌");
-      if (e.message.includes("empty media key")) {
-        await reply(
-          "The media keys have expired - please send a fresh audio/video message",
-        );
-      } else if (e.message.includes("too large")) {
-        await reply(
-          "The audio is too long. Please try with a shorter clip (10-20 seconds).",
-        );
+      if (e.message?.includes("empty media key")) {
+        await reply("The media keys have expired — please send a fresh audio/video message.");
       } else {
         await reply(`❌ Error identifying music: ${e.message}`);
-      }
-    } finally {
-      if (tempFilePath) {
-        try {
-          await fs.access(tempFilePath);
-          await fs.unlink(tempFilePath);
-        } catch (cleanupError) {
-          if (cleanupError.code !== "ENOENT") {
-            console.error("Failed to clean up temp file:", cleanupError);
-          }
-        }
       }
     }
   },
@@ -640,8 +651,6 @@ gmd(
       }
 
       const stickers = res.data.results.slice(0, 10);
-
-      await reply(`Found ${stickers.length} stickers for: *${q}*\nSending...`);
 
       for (const stickerUrl of stickers) {
         try {

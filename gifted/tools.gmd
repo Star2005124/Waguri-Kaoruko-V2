@@ -49,9 +49,10 @@ gmd(
       }
 
       if (contentType.includes("video/")) {
+        const formattedVideo = await formatVideo(buffer);
         return Gifted.sendMessage(
           from,
-          { video: buffer, caption: q },
+          { video: formattedVideo, caption: q },
           { quoted: mek },
         );
       }
@@ -148,6 +149,7 @@ gmd(
       GiftedTechApi,
       GiftedApiKey,
       uploadToImgBB,
+      botPrefix,
     } = conText;
 
     let imageUrl = null;
@@ -183,7 +185,7 @@ gmd(
     if (!imageUrl) {
       await react("❌");
       return reply(
-        "Please provide an image URL or quote an image with a prompt\n\nUsage: .photoeditor <url> <prompt>\nOr quote an image with: .photoeditor <prompt>",
+        `Please provide an image URL or quote an image with a prompt\n\nUsage: ${botPrefix}photoeditor <url> <prompt>\nOr quote an image with: ${botPrefix}photoeditor <prompt>`,
       );
     }
 
@@ -245,6 +247,7 @@ gmd(
       GiftedTechApi,
       GiftedApiKey,
       uploadToImgBB,
+      botPrefix,
     } = conText;
 
     const input = q?.trim() || "";
@@ -281,14 +284,14 @@ gmd(
     if (!pdfName) {
       await react("❌");
       return reply(
-        "Please provide a PDF name and content\n\n*Usage:*\n.pdf <name> <text>\n.pdf <name> <image_url>\n.pdf <name> (quote a message/image)",
+        `Please provide a PDF name and content\n\n*Usage:*\n${botPrefix}pdf <name> <text>\n${botPrefix}pdf <name> <image_url>\n${botPrefix}pdf <name> (quote a message/image)`,
       );
     }
 
     if (!content) {
       await react("❌");
       return reply(
-        "Please provide content for the PDF\n\n*Usage:*\n.pdf <name> <text>\n.pdf <name> <image_url>\n.pdf <name> (quote a message/image)",
+        `Please provide content for the PDF\n\n*Usage:*\n${botPrefix}pdf <name> <text>\n${botPrefix}pdf <name> <image_url>\n${botPrefix}pdf <name> (quote a message/image)`,
       );
     }
 
@@ -331,14 +334,14 @@ gmd(
     description: "Check domain WHOIS information",
   },
   async (from, Gifted, conText) => {
-    const { reply, react, q, botFooter, botName, GiftedTechApi, GiftedApiKey } =
+    const { reply, react, q, botFooter, botName, botPrefix, GiftedTechApi, GiftedApiKey } =
       conText;
 
     const domain = q?.trim();
     if (!domain) {
       await react("❌");
       return reply(
-        "Please provide a domain\n\nUsage: .domaincheck example.com",
+        `Please provide a domain\n\nUsage: ${botPrefix}domaincheck example.com`,
       );
     }
 
@@ -398,6 +401,7 @@ gmd(
       GiftedTechApi,
       GiftedApiKey,
       uploadToImgBB,
+      botPrefix,
     } = conText;
 
     let imageUrl = q?.trim();
@@ -424,7 +428,7 @@ gmd(
     if (!imageUrl) {
       await react("❌");
       return reply(
-        "Please provide an image URL or quote an image\n\nUsage: .remini <url>\nOr quote an image",
+        `Please provide an image URL or quote an image\n\nUsage: ${botPrefix}remini <url>\nOr quote an image`,
       );
     }
 
@@ -467,12 +471,12 @@ gmd(
     description: "Encrypt text to binary",
   },
   async (from, Gifted, conText) => {
-    const { reply, react, q, botFooter, botName } = conText;
+    const { reply, react, q, botFooter, botName, botPrefix } = conText;
 
     const text = q?.trim();
     if (!text) {
       await react("❌");
-      return reply("Please provide text to convert\n\nUsage: .ebinary Hello");
+      return reply(`Please provide text to convert\n\nUsage: ${botPrefix}ebinary Hello`);
     }
 
     const binary = text
@@ -508,13 +512,13 @@ gmd(
     description: "Decrypt binary to text",
   },
   async (from, Gifted, conText) => {
-    const { reply, react, q, botFooter, botName } = conText;
+    const { reply, react, q, botFooter, botName, botPrefix } = conText;
 
     const binary = q?.trim();
     if (!binary) {
       await react("❌");
       return reply(
-        "Please provide binary to convert\n\nUsage: .debinary 01001000 01100101 01101100 01101100 01101111",
+        `Please provide binary to convert\n\nUsage: ${botPrefix}debinary 01001000 01100101 01101100 01101100 01101111`,
       );
     }
 
@@ -556,13 +560,13 @@ gmd(
     description: "Encrypt text to Base64",
   },
   async (from, Gifted, conText) => {
-    const { reply, react, q, botFooter, botName } = conText;
+    const { reply, react, q, botFooter, botName, botPrefix } = conText;
 
     const text = q?.trim();
     if (!text) {
       await react("❌");
       return reply(
-        "Please provide text to convert\n\nUsage: .ebase Hello World",
+        `Please provide text to convert\n\nUsage: ${botPrefix}ebase Hello World`,
       );
     }
 
@@ -596,13 +600,13 @@ gmd(
     description: "Decrypt Base64 to text",
   },
   async (from, Gifted, conText) => {
-    const { reply, react, q, botFooter, botName } = conText;
+    const { reply, react, q, botFooter, botName, botPrefix } = conText;
 
     const base64 = q?.trim();
     if (!base64) {
       await react("❌");
       return reply(
-        "Please provide Base64 to decode\n\nUsage: .dbase SGVsbG8gV29ybGQ=",
+        `Please provide Base64 to decode\n\nUsage: ${botPrefix}dbase SGVsbG8gV29ybGQ=`,
       );
     }
 
@@ -648,6 +652,7 @@ gmd(
       q,
       botFooter,
       botName,
+      botPrefix,
       GiftedTechApi,
       GiftedApiKey,
     } = conText;
@@ -655,7 +660,7 @@ gmd(
     const url = q?.trim();
     if (!url) {
       await react("❌");
-      return reply("Please provide a URL\n\nUsage: .ssweb https://google.com");
+      return reply(`Please provide a URL\n\nUsage: ${botPrefix}ssweb https://google.com`);
     }
 
     await react("⏳");

@@ -975,6 +975,7 @@ gmd(
       isAdmin,
       isSuperAdmin,
       args,
+      botPrefix,
     } = conText;
 
     if (!isGroup) return reply("❌ This command only works in groups!");
@@ -984,7 +985,7 @@ gmd(
 
     if (!args[0])
       return reply(
-        "❌ Please provide a phone number.\n\n*Usage:* .accept 254712345678",
+        `❌ Please provide a phone number.\n\n*Usage:* ${botPrefix}accept 254712345678`,
       );
 
     try {
@@ -1028,6 +1029,7 @@ gmd(
       isAdmin,
       isSuperAdmin,
       args,
+      botPrefix,
     } = conText;
 
     if (!isGroup) return reply("❌ This command only works in groups!");
@@ -1037,7 +1039,7 @@ gmd(
 
     if (!args[0])
       return reply(
-        "❌ Please provide a phone number.\n\n*Usage:* .reject 254712345678",
+        `❌ Please provide a phone number.\n\n*Usage:* ${botPrefix}reject 254712345678`,
       );
 
     try {
@@ -1206,7 +1208,8 @@ gmd(
 
           if (
             presence?.lastKnownPresence === "composing" ||
-            presence?.lastKnownPresence === "recording"
+            presence?.lastKnownPresence === "recording" ||
+            presence?.lastKnownPresence === "available"
           ) {
             let displayJid = participantId;
             if (participantId.endsWith("@lid")) {
@@ -1499,32 +1502,25 @@ gmd(
     description: "Send text or quoted media to group status. Superuser only.",
   },
   async (from, Gifted, conText) => {
-    const { reply, react, isSuperUser, isGroup, q, quoted, quotedMsg, mek } = conText;
+    const { reply, react, isSuperUser, isGroup, q, quoted, quotedMsg, mek, formatAudio, formatVideo, botPrefix } = conText;
     const { downloadMediaMessage } = require("gifted-baileys");
-    const fs = require("fs");
-    const path = require("path");
 
     if (!isGroup) return reply("❌ Group only command!");
     if (!isSuperUser) return reply("❌ Owner Only Command!");
 
     if (!q && !quotedMsg) {
       return reply(
-        "📌 *Usage:*\n" +
-          "• .togroupstatus <text>\n" +
-          "• Reply to image/video/audio with .togroupstatus <caption>\n" +
-          "• Or just .togroupstatus to forward quoted media",
+        `📌 *Usage:*\n` +
+          `• ${botPrefix}togroupstatus <text>\n` +
+          `• Reply to image/video/audio with ${botPrefix}togroupstatus <caption>\n` +
+          `• Or just ${botPrefix}togroupstatus to forward quoted media`,
       );
     }
 
-    let tempFilePath = null;
-
     try {
-      let payload = { groupStatusMessage: {} };
+      let statusPayload = {};
 
       if (quotedMsg) {
-        const tempDir = "gift/temp";
-        if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
-
         if (quoted?.imageMessage) {
           const caption = q || quoted.imageMessage.caption || "";
           const buffer = await downloadMediaMessage(
@@ -1532,80 +1528,55 @@ gmd(
             "buffer",
             {},
           );
-          tempFilePath = path.join(tempDir, `status_${Date.now()}.jpg`);
-          fs.writeFileSync(tempFilePath, buffer);
-          payload.groupStatusMessage.image = { url: tempFilePath };
-          if (caption) payload.groupStatusMessage.caption = caption;
+          statusPayload = { 
+            image: buffer,
+            mimetype: "image/jpeg"
+          };
+          if (caption) statusPayload.caption = caption;
         } else if (quoted?.videoMessage) {
           const caption = q || quoted.videoMessage.caption || "";
-          const buffer = await downloadMediaMessage(
+          let buffer = await downloadMediaMessage(
             { message: quotedMsg },
             "buffer",
             {},
           );
-          tempFilePath = path.join(tempDir, `status_${Date.now()}.mp4`);
-          fs.writeFileSync(tempFilePath, buffer);
-          payload.groupStatusMessage.video = { url: tempFilePath };
-          if (caption) payload.groupStatusMessage.caption = caption;
+          buffer = await formatVideo(buffer);
+          statusPayload = { 
+            video: buffer,
+            mimetype: "video/mp4"
+          };
+          if (caption) statusPayload.caption = caption;
         } else if (quoted?.audioMessage) {
-          const buffer = await downloadMediaMessage(
+          let buffer = await downloadMediaMessage(
             { message: quotedMsg },
             "buffer",
             {},
           );
-          tempFilePath = path.join(tempDir, `status_${Date.now()}.mp3`);
-          fs.writeFileSync(tempFilePath, buffer);
-          payload.groupStatusMessage.audio = { url: tempFilePath };
-        } else if (quoted?.documentMessage) {
-          const buffer = await downloadMediaMessage(
-            { message: quotedMsg },
-            "buffer",
-            {},
-          );
-          const ext =
-            quoted.documentMessage.fileName?.split(".").pop() || "bin";
-          tempFilePath = path.join(tempDir, `status_${Date.now()}.${ext}`);
-          fs.writeFileSync(tempFilePath, buffer);
-          payload.groupStatusMessage.document = { url: tempFilePath };
-        } else if (quoted?.stickerMessage) {
-          const buffer = await downloadMediaMessage(
-            { message: quotedMsg },
-            "buffer",
-            {},
-          );
-          tempFilePath = path.join(tempDir, `status_${Date.now()}.webp`);
-          fs.writeFileSync(tempFilePath, buffer);
-          payload.groupStatusMessage.sticker = { url: tempFilePath };
+          buffer = await formatAudio(buffer);
+          statusPayload = { 
+            audio: buffer,
+            mimetype: "audio/mp4",
+            ptt: true
+          };
         } else if (quoted?.conversation || quoted?.extendedTextMessage?.text) {
-          payload.groupStatusMessage.text =
-            quoted.conversation || quoted.extendedTextMessage.text;
+          statusPayload.text = quoted.conversation || quoted.extendedTextMessage.text;
         } else {
           return reply("❌ Unsupported media type for group status.");
         }
 
-        if (
-          q &&
-          !payload.groupStatusMessage.caption &&
-          !payload.groupStatusMessage.text
-        ) {
-          payload.groupStatusMessage.caption = q;
+        if (q && !statusPayload.caption && !statusPayload.text) {
+          statusPayload.caption = q;
         }
       } else {
-        payload.groupStatusMessage.text = q;
+        statusPayload.text = q;
       }
 
-      await Gifted.sendMessage(from, payload, { quoted: mek });
+      await Gifted.giftedStatus.sendGroupStatus(from, statusPayload);
       await react("✅");
     } catch (error) {
       console.error("togroupstatus error:", error);
       await react("❌");
       return reply(`❌ Error sending group status: ${error.message}`);
-    } finally {
-      if (tempFilePath && fs.existsSync(tempFilePath)) {
-        try {
-          fs.unlinkSync(tempFilePath);
-        } catch (e) {}
-      }
     }
   },
 );
@@ -1634,6 +1605,7 @@ gmd(
       isAdmin,
       isSuperAdmin,
       q,
+      botPrefix,
     } = conText;
 
     if (!isGroup) return reply("❌ This command only works in groups!");
@@ -1643,7 +1615,7 @@ gmd(
 
     if (!q)
       return reply(
-        "❌ Please provide a new group name.\n\n*Usage:* .groupname New Group Name",
+        `❌ Please provide a new group name.\n\n*Usage:* ${botPrefix}groupname New Group Name`,
       );
 
     try {
@@ -1681,6 +1653,7 @@ gmd(
       isAdmin,
       isSuperAdmin,
       q,
+      botPrefix,
     } = conText;
 
     if (!isGroup) return reply("❌ This command only works in groups!");
@@ -1690,7 +1663,7 @@ gmd(
 
     if (!q)
       return reply(
-        "❌ Please provide a new group description.\n\n*Usage:* .gcdesc New Description Here",
+        `❌ Please provide a new group description.\n\n*Usage:* ${botPrefix}gcdesc New Description Here`,
       );
 
     try {
@@ -1708,7 +1681,7 @@ gmd(
   {
     pattern: "everyone",
     react: "📢",
-    aliases: ["everyone", "tag", "tagall1", "mention"],
+    aliases: ["tag", "all", "mention"],
     category: "group",
     description: "Tag everyone in the group with custom message",
   },
@@ -1801,6 +1774,7 @@ gmd(
       quotedMsg,
       botName,
       newsletterJid,
+      botPrefix,
     } = conText;
 
     if (!isGroup) {
@@ -1826,7 +1800,7 @@ gmd(
 
     if (!text) {
       return reply(
-        "❌ Please provide a message or reply to one.\n\n*Usage:* .hidetag Your message here",
+        `❌ Please provide a message or reply to one.\n\n*Usage:* ${botPrefix}hidetag Your message here`,
       );
     }
 
@@ -1891,6 +1865,7 @@ gmd(
       q,
       mek,
       botName,
+      botPrefix,
     } = conText;
 
     if (!isGroup) return reply("❌ This command only works in groups!");
@@ -1908,7 +1883,7 @@ gmd(
             ? "OFF"
             : `ON (${currentSetting})`;
         return reply(
-          `🛡️ *Anti-Group-Mention Status*\n\nCurrent: *${status}*\n\n*Usage:*\n• .antigroupmention on - Enable with warnings\n• .antigroupmention warn - Enable with warnings\n• .antigroupmention delete - Delete message only\n• .antigroupmention kick - Kick immediately\n• .antigroupmention off - Disable`,
+          `🛡️ *Anti-Group-Mention Status*\n\nCurrent: *${status}*\n\n*Usage:*\n• ${botPrefix}antigroupmention on - Enable with warnings\n• ${botPrefix}antigroupmention warn - Enable with warnings\n• ${botPrefix}antigroupmention delete - Delete message only\n• ${botPrefix}antigroupmention kick - Kick immediately\n• ${botPrefix}antigroupmention off - Disable`,
         );
       }
 
@@ -1955,7 +1930,7 @@ gmd(
     description: "Set the warning limit for anti-group-mention before kicking",
   },
   async (from, Gifted, conText) => {
-    const { reply, react, isGroup, isBotAdmin, isAdmin, isSuperAdmin, q, mek } =
+    const { reply, react, isGroup, isBotAdmin, isAdmin, isSuperAdmin, q, mek, botPrefix } =
       conText;
 
     if (!isGroup) return reply("❌ This command only works in groups!");
@@ -1971,7 +1946,7 @@ gmd(
 
       if (!q || !q.trim()) {
         return reply(
-          `⚙️ *Anti-Group-Mention Warn Limit*\n\nCurrent: *${currentLimit || 3}* warnings\n\n*Usage:* .setantigcmentionwarnlimit <number>\n*Example:* .setantigcmentionwarnlimit 5`,
+          `⚙️ *Anti-Group-Mention Warn Limit*\n\nCurrent: *${currentLimit || 3}* warnings\n\n*Usage:* ${botPrefix}setantigcmentionwarnlimit <number>\n*Example:* ${botPrefix}setantigcmentionwarnlimit 5`,
         );
       }
 
@@ -2000,7 +1975,7 @@ gmd(
   {
     pattern: "tagall",
     react: "📢",
-    aliases: ["all", "mentionall"],
+    aliases: ["mentionall"],
     category: "group",
     description: "Tag all group members with optional message",
   },
@@ -2149,7 +2124,7 @@ gmd(
     description: "Toggle anti-promote protection. Demotes both promoter and promoted user.",
   },
   async (from, Gifted, conText) => {
-    const { reply, react, isGroup, isBotAdmin, isAdmin, isSuperAdmin, args } = conText;
+    const { reply, react, isGroup, isBotAdmin, isAdmin, isSuperAdmin, args, botPrefix } = conText;
 
     if (!isGroup) return reply("❌ This command only works in groups!");
     if (!isBotAdmin) return reply("❌ Bot is not an admin in this group!");
@@ -2160,7 +2135,7 @@ gmd(
     const current = rawCurrent === "true" ? "true" : "false";
     
     if (!action || !["on", "off"].includes(action)) {
-      return reply(`🛡️ *Anti-Promote Protection*\n\nCurrent: ${current === "true" ? "ON ✅" : "OFF ❌"}\n\n*Usage:*\n.antipromote on - Enable\n.antipromote off - Disable\n\n_When enabled, if someone promotes another user, both will be demoted._`);
+      return reply(`🛡️ *Anti-Promote Protection*\n\nCurrent: ${current === "true" ? "ON ✅" : "OFF ❌"}\n\n*Usage:*\n${botPrefix}antipromote on - Enable\n${botPrefix}antipromote off - Disable\n\n_When enabled, if someone promotes another user, both will be demoted._`);
     }
 
     const value = action === "on" ? "true" : "false";
@@ -2182,7 +2157,7 @@ gmd(
     description: "Toggle anti-demote protection. Demotes demoter and re-promotes demoted user.",
   },
   async (from, Gifted, conText) => {
-    const { reply, react, isGroup, isBotAdmin, isAdmin, isSuperAdmin, args } = conText;
+    const { reply, react, isGroup, isBotAdmin, isAdmin, isSuperAdmin, args, botPrefix } = conText;
 
     if (!isGroup) return reply("❌ This command only works in groups!");
     if (!isBotAdmin) return reply("❌ Bot is not an admin in this group!");
@@ -2193,7 +2168,7 @@ gmd(
     const current = rawCurrent === "true" ? "true" : "false";
     
     if (!action || !["on", "off"].includes(action)) {
-      return reply(`🛡️ *Anti-Demote Protection*\n\nCurrent: ${current === "true" ? "ON ✅" : "OFF ❌"}\n\n*Usage:*\n.antidemote on - Enable\n.antidemote off - Disable\n\n_When enabled, if someone demotes an admin, the demoter gets demoted and the demoted user is re-promoted._`);
+      return reply(`🛡️ *Anti-Demote Protection*\n\nCurrent: ${current === "true" ? "ON ✅" : "OFF ❌"}\n\n*Usage:*\n${botPrefix}antidemote on - Enable\n${botPrefix}antidemote off - Disable\n\n_When enabled, if someone demotes an admin, the demoter gets demoted and the demoted user is re-promoted._`);
     }
 
     const value = action === "on" ? "true" : "false";

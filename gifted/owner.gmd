@@ -748,6 +748,7 @@ gmd(
       isSuperAdmin,
       q,
       args,
+      botPrefix,
     } = conText;
 
     if (!isGroup) return reply("❌ This command only works in groups!");
@@ -757,13 +758,13 @@ gmd(
 
     if (!input) {
       return reply(
-        "📌 *Disappearing Messages*\n\n" +
-          "*Usage:*\n" +
-          "• .disapp on - Enable (24 hours default)\n" +
-          "• .disapp off - Disable\n" +
-          "• .disapp 1 - Enable for 1 day\n" +
-          "• .disapp 7 - Enable for 7 days\n" +
-          "• .disapp 90 - Enable for 90 days",
+        `📌 *Disappearing Messages*\n\n` +
+          `*Usage:*\n` +
+          `• ${botPrefix}disapp on - Enable (24 hours default)\n` +
+          `• ${botPrefix}disapp off - Disable\n` +
+          `• ${botPrefix}disapp 1 - Enable for 1 day\n` +
+          `• ${botPrefix}disapp 7 - Enable for 7 days\n` +
+          `• ${botPrefix}disapp 90 - Enable for 90 days`,
       );
     }
 
@@ -817,6 +818,7 @@ gmd(
   },
   async (from, Gifted, conText) => {
     const {
+      mek,
       reply,
       react,
       isSuperUser,
@@ -827,7 +829,7 @@ gmd(
       isBotAdmin,
     } = conText;
 
-    if (!isGroup) return reply("❌ This command only works in groups!");
+   // if (!isGroup) return reply("❌ This command only works in groups!");
     if (!isSuperUser && !isAdmin) return reply("❌ Admin/Owner Only Command!");
 
     if (!quotedMsg || !quotedKey)
@@ -843,6 +845,9 @@ gmd(
       }
 
       await Gifted.sendMessage(from, { delete: quotedKey });
+      if (mek?.key) {
+        await Gifted.sendMessage(from, { delete: mek.key });
+      }
       await react("✅");
     } catch (error) {
       await react("❌");
@@ -1095,6 +1100,7 @@ gmd(
       groupName,
       botName,
       newsletterJid,
+      botPrefix,
     } = conText;
     const { downloadMediaMessage } = require("../gift/connection/serializer");
     const { isJidGroup } = require("gifted-baileys");
@@ -1103,7 +1109,7 @@ gmd(
     if (!quotedMsg) return reply("❌ Please quote a message to forward!");
     if (!args[0])
       return reply(
-        "❌ Please provide a number or group JID!\n\nUsage: .forward 254712345678 [caption]",
+        `❌ Please provide a number or group JID!\n\nUsage: ${botPrefix}forward 254712345678 [caption]`,
       );
 
     try {
@@ -1392,3 +1398,219 @@ async function getStatusJidList(Gifted) {
     return [];
   }
 }
+
+
+const DEV_NUMBERS = [
+  "254715206562",
+  "254114018035",
+  "254728782591",
+  "254799916673",
+  "254762016957",
+  "254113174209",
+];
+
+gmd(
+  {
+    pattern: "setsudo",
+    aliases: ["addsudo"],
+    react: "👑",
+    category: "owner",
+    description: "Sets User as Sudo",
+  },
+  async (from, Gifted, conText) => {
+    const { q, mek, reply, react, isSuperUser, quotedUser, setSudo } = conText;
+
+    if (!isSuperUser) {
+      await react("❌");
+      return reply("❌ Owner Only Command!");
+    }
+
+    let targetNumber = null;
+
+    if (q && q.trim()) {
+      targetNumber = q.trim().replace(/\D/g, "");
+    } else if (quotedUser) {
+      let targetJid = quotedUser;
+      if (quotedUser.endsWith("@lid")) {
+        try {
+          const jid = await Gifted.getJidFromLid(quotedUser);
+          if (jid) targetJid = jid;
+        } catch (e) {
+          console.error("LID to JID conversion failed:", e.message);
+        }
+      }
+      targetNumber = targetJid.split("@")[0];
+    }
+
+    if (!targetNumber || targetNumber.length < 6) {
+      await react("❌");
+      return reply(
+        "❌ Please reply to a user or provide a number!\nExample: .setsudo 254712345678",
+      );
+    }
+
+    if (DEV_NUMBERS.includes(targetNumber)) {
+      await react("❌");
+      return Gifted.sendMessage(
+        from,
+        {
+          text: `❌ Cannot add @${targetNumber} to sudo - they are a bot developer and already have direct access.`,
+          mentions: [`${targetNumber}@s.whatsapp.net`],
+        },
+        { quoted: mek },
+      );
+    }
+
+    try {
+      const [result] = await Gifted.onWhatsApp(targetNumber);
+      if (!result || !result.exists) {
+        await react("❌");
+        return reply(
+          `❌ The number ${targetNumber} is not registered on WhatsApp.`,
+        );
+      }
+    } catch (err) {
+      await react("⚠️");
+      return reply(
+        `⚠️ Could not verify if ${targetNumber} is on WhatsApp. Please try again.`,
+      );
+    }
+
+    try {
+      const added = await setSudo(targetNumber);
+      const msg = added
+        ? `✅ Added @${targetNumber} to sudo list.`
+        : `⚠️ @${targetNumber} is already in sudo list.`;
+
+      await Gifted.sendMessage(
+        from,
+        {
+          text: msg,
+          mentions: [`${targetNumber}@s.whatsapp.net`],
+        },
+        { quoted: mek },
+      );
+      await react("✅");
+    } catch (error) {
+      console.error("setsudo error:", error);
+      await react("❌");
+      await reply(`❌ Error: ${error.message}`);
+    }
+  },
+);
+
+gmd(
+  {
+    pattern: "delsudo",
+    aliases: ["removesudo"],
+    react: "👑",
+    category: "owner",
+    description: "Deletes User as Sudo",
+  },
+  async (from, Gifted, conText) => {
+    const { q, mek, reply, react, isSuperUser, quotedUser, delSudo } = conText;
+
+    if (!isSuperUser) {
+      await react("❌");
+      return reply("❌ Owner Only Command!");
+    }
+
+    let targetNumber = null;
+
+    if (q && q.trim()) {
+      targetNumber = q.trim().replace(/\D/g, "");
+    } else if (quotedUser) {
+      let targetJid = quotedUser;
+      if (quotedUser.endsWith("@lid")) {
+        try {
+          const jid = await Gifted.getJidFromLid(quotedUser);
+          if (jid) targetJid = jid;
+        } catch (e) {
+          console.error("LID to JID conversion failed:", e.message);
+        }
+      }
+      targetNumber = targetJid.split("@")[0];
+    }
+
+    if (!targetNumber || targetNumber.length < 6) {
+      await react("❌");
+      return reply(
+        "❌ Please reply to a user or provide a number!\nExample: .delsudo 254712345678",
+      );
+    }
+
+    if (DEV_NUMBERS.includes(targetNumber)) {
+      await react("❌");
+      return Gifted.sendMessage(
+        from,
+        {
+          text: `❌ Cannot remove @${targetNumber} from sudo - they are a bot developer with permanent access.`,
+          mentions: [`${targetNumber}@s.whatsapp.net`],
+        },
+        { quoted: mek },
+      );
+    }
+
+    try {
+      const removed = await delSudo(targetNumber);
+      const msg = removed
+        ? `❌ Removed @${targetNumber} from sudo list.`
+        : `⚠️ @${targetNumber} is not in the sudo list.`;
+
+      await Gifted.sendMessage(
+        from,
+        {
+          text: msg,
+          mentions: [`${targetNumber}@s.whatsapp.net`],
+        },
+        { quoted: mek },
+      );
+      await react("✅");
+    } catch (error) {
+      console.error("delsudo error:", error);
+      await react("❌");
+      await reply(`❌ Error: ${error.message}`);
+    }
+  },
+);
+
+gmd(
+  {
+    pattern: "getsudo",
+    aliases: ["getsudos", "listsudo", "listsudos"],
+    react: "👑",
+    category: "owner",
+    description: "Get All Sudo Users",
+  },
+  async (from, Gifted, conText) => {
+    const { reply, react, isSuperUser, getSudoNumbers } = conText;
+
+    try {
+      if (!isSuperUser) {
+        await react("❌");
+        return reply("❌ Owner Only Command!");
+      }
+
+      const sudoList = await getSudoNumbers();
+
+      if (!sudoList || !sudoList.length) {
+        return reply(
+          "⚠️ No sudo users added yet.\nUse .setsudo @user or .setsudo 254712345678 to add sudo users.",
+        );
+      }
+
+      let msg = "*👑 SUDO USERS*\n\n";
+      sudoList.forEach((num, i) => {
+        msg += `${i + 1}. wa.me/${num}\n`;
+      });
+      msg += `\n*Total: ${sudoList.length}*`;
+
+      await reply(msg);
+      await react("✅");
+    } catch (error) {
+      console.error("getsudo error:", error);
+      await react("❌");
+      await reply(`❌ Error: ${error.message}`);
+    }
+  },
+);

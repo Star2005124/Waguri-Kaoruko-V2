@@ -38,14 +38,14 @@ gmd(
         description: "Check if a phone number is registered on WhatsApp",
     },
     async (from, Gifted, conText) => {
-        const { sender, mek, reply, react, q } = conText;
+        const { sender, mek, reply, react, q, botPrefix } = conText;
 
         if (!q || q.trim() === "") {
             await react("❌");
             return reply(`❌ Please provide a phone number.
 
-*Usage:* .onwa <number>
-*Example:* .onwa 254712345678
+*Usage:* ${botPrefix}onwa <number>
+*Example:* ${botPrefix}onwa 254712345678
 
 _Include country code without + or spaces_`);
         }
@@ -141,8 +141,6 @@ gmd(
                     "❌ Could not extract any valid contacts from this group.",
                 );
             }
-
-            await reply(`Saving ${count} participants contact...`);
 
             const fileName = `${groupName}.vcf`;
 

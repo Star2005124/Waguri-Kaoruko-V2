@@ -124,60 +124,12 @@ gmd(
   },
 );
 
-gmd(
-  {
-    pattern: "geminipro",
-    description: "Chat with Google Gemini Pro",
-    category: "Ai",
-    filename: __filename,
-  },
-  async (from, Gifted, conText) => {
-    await queryAI("geminiaipro", conText.q, conText);
-  },
-);
 
 gmd(
   {
-    pattern: "deepseek",
-    description: "Chat with DeepSeek R1 reasoning model",
-    category: "Ai",
-    filename: __filename,
-  },
-  async (from, Gifted, conText) => {
-    await queryAI("deepseek-r1", conText.q, conText);
-  },
-);
-
-gmd(
-  {
-    pattern: "deepseekv3",
-    description: "Chat with DeepSeek V3 model",
-    category: "Ai",
-    filename: __filename,
-  },
-  async (from, Gifted, conText) => {
-    await queryAI("deepseek-v3", conText.q, conText);
-  },
-);
-
-gmd(
-  {
-    pattern: "blackbox",
-    aliases: ["blackboxai"],
-    description: "Chat with Blackbox AI (coding focused)",
-    category: "Ai",
-    filename: __filename,
-  },
-  async (from, Gifted, conText) => {
-    await queryAI("blackbox", conText.q, conText);
-  },
-);
-
-gmd(
-  {
-    pattern: "mistral",
-    aliases: ["mistralai"],
-    description: "Chat with Mistral AI model",
+    pattern: "venice",
+    aliases: ["veniceai"],
+    description: "Chat with Venice AI model",
     category: "Ai",
     filename: __filename,
   },

@@ -6,6 +6,24 @@ const { gmd } = require("../gift"),
   } = require("gifted-baileys"),
   { sendButtons } = require("gifted-btns");
 
+function extractButtonId(msg) {
+    if (!msg) return null;
+    if (msg.templateButtonReplyMessage?.selectedId)
+        return msg.templateButtonReplyMessage.selectedId;
+    if (msg.buttonsResponseMessage?.selectedButtonId)
+        return msg.buttonsResponseMessage.selectedButtonId;
+    if (msg.listResponseMessage?.singleSelectReply?.selectedRowId)
+        return msg.listResponseMessage.singleSelectReply.selectedRowId;
+    if (msg.interactiveResponseMessage) {
+        const nf = msg.interactiveResponseMessage.nativeFlowResponseMessage;
+        if (nf?.paramsJson) {
+            try { const p = JSON.parse(nf.paramsJson); if (p.id) return p.id; } catch {}
+        }
+        return msg.interactiveResponseMessage.buttonId || null;
+    }
+    return null;
+}
+
 
 gmd(
   {
@@ -337,11 +355,8 @@ gmd(
           const messageData = event.messages[0];
           if (!messageData?.message) return;
 
-          const templateButtonReply =
-            messageData.message?.templateButtonReplyMessage;
-          if (!templateButtonReply) return;
-
-          const selectedButtonId = templateButtonReply.selectedId;
+          const selectedButtonId = extractButtonId(messageData.message);
+          if (!selectedButtonId) return;
           if (!selectedButtonId?.includes(`npm_dl_${dateNow}`)) return;
 
           const isFromSameChat = messageData.key?.remoteJid === from;
@@ -362,13 +377,12 @@ gmd(
             await reply("Failed to download package: " + dlErr.message);
           }
 
-          Gifted.ev.off("messages.upsert", handleResponse);
         };
 
         Gifted.ev.on("messages.upsert", handleResponse);
         setTimeout(
           () => Gifted.ev.off("messages.upsert", handleResponse),
-          120000,
+          300000,
         );
       } else {
         await reply(txt);
@@ -552,11 +566,8 @@ gmd(
         const messageData = event.messages[0];
         if (!messageData?.message) return;
 
-        const templateButtonReply =
-          messageData.message?.templateButtonReplyMessage;
-        if (!templateButtonReply) return;
-
-        const selectedButtonId = templateButtonReply.selectedId;
+        const selectedButtonId = extractButtonId(messageData.message);
+        if (!selectedButtonId) return;
         if (!selectedButtonId?.includes(`spotify_dl_${dateNow}`)) return;
 
         const isFromSameChat = messageData.key?.remoteJid === from;
@@ -572,7 +583,6 @@ gmd(
             { quoted: messageData },
           );
         }
-        Gifted.ev.off("messages.upsert", handleResponse);
       };
 
       Gifted.ev.on("messages.upsert", handleResponse);
