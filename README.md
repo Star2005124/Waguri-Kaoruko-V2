@@ -44,4 +44,77 @@
 
 <details>
 <summary>GET YOUR SESSION_ID</summary>
-<a href="https://session.example.com">
+<a href="https://session.example.com"><img src="https://img.shields.io/badge/PAIR%20DEVICE-green" alt="Pairing Code" width="150"></a>
+
+- Session ID must start with **Default~**
+</details>
+
+<a><img src='https://i.imgur.com/LyHic3i.gif'/></a>
+
+### 𝟑. 𝐃𝐄𝐏𝐋𝐎𝐘𝐌𝐄𝐍𝐓
+
+**(A) HEROKU DEPLOYMENT**
+<details>
+<summary>TAP TO OPEN</summary>
+<a href="https://signup.heroku.com/login"><img src="https://img.shields.io/badge/HEROKU%20SIGNUP-white" alt="Heroku Signup" width="150"></a>
+<a href="https://dashboard.heroku.com/new?template=https://github.com/your-username/waguri-kaoruko-md"><img src="https://img.shields.io/badge/DEPLOY%20NOW-red" alt="Deploy" width="150"></a>
+</details>
+
+<a><img src='https://i.imgur.com/LyHic3i.gif'/></a>
+
+**(B) RENDER DEPLOYMENT**
+<details>
+<summary>TAP TO OPEN</summary>
+<a href="https://dashboard.render.com/signup"><img src="https://img.shields.io/badge/RENDER%20SIGNUP-green" alt="Render Signup" width="150"></a>
+<a href="https://youtu.be/example"><img src="https://img.shields.io/badge/WATCH%20TUTORIAL-red" alt="Render Tutorial" width="150"></a>
+</details>
+
+<a><img src='https://i.imgur.com/LyHic3i.gif'/></a>
+
+**(C) KOYEB DEPLOYMENT**
+<details>
+<summary>TAP TO OPEN</summary>
+<a href="https://app.koyeb.com/auth/signup"><img src="https://img.shields.io/badge/KOYEB%20SIGNUP-purple" alt="Koyeb Signup" width="150"></a>
+<a href="https://app.koyeb.com/services/deploy/?type=git&repository=github.com%2Fyour-username%2Fwaguri-kaoruko-md&branch=main&name=waguri-md&builder=dockerfile&env%5BSESSION_ID%5D=Default~your-session-id"><img src="https://img.shields.io/badge/DEPLOY%20NOW-black" alt="Koyeb Deploy" width="150"></a>
+</details>
+
+<a><img src='https://i.imgur.com/LyHic3i.gif'/></a>
+
+### 𝟒. 𝐔𝐏𝐃𝐀𝐓𝐄𝐒
+
+<details>
+<summary>CLICK HERE</summary>
+
+- **[Contact Support](https://wa.me/601165811519)**
+- **Join [WhatsApp Channel](https://whatsapp.com/channel/SOON) for updates**
+- **Visit [Website](https://COMING.SOON) for more projects**
+</details>
+
+<a><img src='https://i.imgur.com/LyHic3i.gif'/></a>
+
+### 𝟓. 𝐑𝐄𝐏𝐎 𝐒𝐓𝐀𝐑 𝐇𝐈𝐒𝐓𝐎𝐑𝐘
+
+[![Waguri-Kaoruko-MD](https://api.star-history.com/svg?repos=your-username/waguri-kaoruko-md&type=Timeline)](#)
+
+<a><img src='https://i.imgur.com/LyHic3i.gif'/></a>
+
+---
+
+## ✨ Features
+- 📩 Auto-reply to messages  
+- 🎶 Media downloader (YouTube, TikTok, Instagram, etc.)  
+- 📷 Sticker generator (image/video → sticker)  
+- 🌐 Group management tools (welcome, goodbye, anti-link, etc.)  
+- 🛠️ Utility commands (weather, dictionary, translator)  
+- 🎮 Fun commands (games, memes, quotes)  
+- 🔒 Secure multi-device login  
+
+---
+
+## 📦 Installation
+
+### 1. Clone the repository
+```bash
+git clone https://github.com/your-username/waguri-kaoruko-md.git
+cd waguri-kaoruko-md
+
